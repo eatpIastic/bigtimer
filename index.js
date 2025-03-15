@@ -19,8 +19,13 @@ register("command", (...args) => {
         return;
     }
     
-    let room = args[0];
-    let numSecrets = parseInt(args[1]);
+    let room = "";
+    for (let i = 0; i < args.length - 1; i++) {
+        room += args[i] + " ";
+    }
+    room = room.trim();
+    
+    let numSecrets = parseInt(args[args.length-1]);
 
     if (isNaN(numSecrets)) {
         ChatLib.chat(`Incorrect Usage. Example: /bigtimer Pirate 5`);
@@ -37,7 +42,7 @@ register("command", (...args) => {
     let namesThatStartWith = [];
 
     tabCompletions.forEach(i => {
-        if (i.startsWith((args[args.length - 1])?.toLowerCase())) {
+        if (i.startsWith((args[args.length - 1]))) {
             namesThatStartWith.push(i);
         }
     });
@@ -95,7 +100,7 @@ class DungeonRoom {
 
     checkCompleted(secretsDone) {
         if (secretsDone >= this.maxSecrets) {
-            ChatLib.chat(`&7> &b${this.roomName} &fdone in &b${this.formatTime()} &fseconds &7(${this.secretsDone}/${this.maxSecrets})`);
+            ChatLib.chat(`&7> &b${this.roomName} &fdone in &b${this.formatTime()} &fseconds &7(${secretsDone}/${this.maxSecrets})`);
         }
 
         return secretsDone >= this.maxSecrets;
