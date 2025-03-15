@@ -73,7 +73,7 @@ register("command", (...args) => {
 
     customData[room] = numSecrets;
     customData.save();
-}).setName("bigtimer").setTabCompletions( (args) => {
+}).setTabCompletions( (args) => {
     if (!args || args.length == 0 || args?.[0]?.trim() == "") {
         return tabCompletions;
     }
@@ -87,7 +87,7 @@ register("command", (...args) => {
     });
 
     return namesThatStartWith;
-});
+}).setName("bigtimer");
 
 
 register("playerInteract", (action, pos, event) => {
@@ -177,7 +177,7 @@ class DungeonRoom {
 
     constructor(currentSecrets, maxSecrets, roomName, fakeMaxSecrets) {
         if (completedRooms.has(roomName)) {
-            completedRooms = null;
+            currentRoom = null;
         }
         this.currentSecrets = currentSecrets;
         this.fakeSecrets = 0;
