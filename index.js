@@ -10,6 +10,7 @@ const pbData = new PogObject("bigtimer", {}, "pbs.json");
 const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
 
 const tabCompletions = [];
+const roomToSecretCount = new Map();
 
 let currentRoom = null;
 let soloRun = false;
@@ -236,6 +237,7 @@ class DungeonRoom {
 const setupTabCompletion = () => {
     for (let i = 0; i < rooms.length; i++) {
         tabCompletions.push(rooms[i].name);
+        roomToSecretCount.set(rooms[i].name, rooms[i]?.secrets ?? 0);
     }
 }
 
@@ -245,7 +247,7 @@ const printPBS = () => {
         ChatLib.chat(`&8-----  &9&l${pbKeys[i]} pbs`);
         let roomKeys = Object.keys(pbData[pbKeys[i]]);
         for (let j = 0; j < roomKeys.length; j++) {
-            ChatLib.chat(`&7> &9${roomKeys[j]}&f: ${(pbData[pbKeys[i]][roomKeys[j]]).toFixed(2)}`);
+            ChatLib.chat(`&7> &9${roomKeys[j]}&f: ${(pbData[pbKeys[i]][roomKeys[j]]).toFixed(2)} &7(${customData?.[roomKeys[j]] ?? roomToSecretCount.get(roomKeys[j])})`);
         }
     }
 }
