@@ -34,7 +34,22 @@ register("command", (...args) => {
     }
 
     if (args[0] == "pb" || args[0] == "pbs") {
-        printPBS();
+        if (!args?.[1]) {
+            printPBS();
+        } else {
+            let roomName = args.splice(1).join(" ");
+            let PBstr = `&7> &9PBs for &f${roomName}: `;
+
+            if (pbData?.["solo"]?.[roomName]) {
+                PBstr += `solo: ${(pbData["solo"][roomName]).toFixed(2)} `;
+            }
+            if (pbData?.["realrun"]?.[roomName]) {
+                PBstr += `realrun: ${(pbData["realrun"][roomName]).toFixed(2)}`;
+            }
+
+            ChatLib.chat(PBstr);
+        }
+        
         return;
     }
 
