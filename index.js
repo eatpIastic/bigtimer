@@ -142,15 +142,18 @@ class DungeonRoom {
         if (currentRoom != null && roomName != currentRoom.roomName) {
             currentRoom = null;
         }
-    
-        if (secretsDone == 0) return;
-    
+
         if (customData?.[roomName]) {
             maxSecrets = customData[roomName];
         }
     
+        if (secretsDone == 0 && maxSecrets == 1 && currentRoom == null) {
+            currentRoom = new DungeonRoom(0, 1, roomName);
+            return;
+        } else if (secretsDone == 0 && currentRoom == null) {
+            return;
+        }
         
-    
         if (secretsDone == 1 && currentRoom == null && maxSecrets != 1) {
             currentRoom = new DungeonRoom(secretsDone, maxSecrets, roomName);
         }
