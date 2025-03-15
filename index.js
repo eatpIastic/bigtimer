@@ -14,6 +14,10 @@ const tabCompletions = [];
 let currentRoom = null;
 let soloRun = false;
 let lastChestClicked = null;
+let completedRooms = new Set();
+
+register("worldLoad", () => completedRooms = new Set());
+
 
 register("step", () => {
     if (!Dungeon.inDungeon || soloRun || Date.now() - Dungeon.runStarted > 5000) return;
@@ -82,7 +86,7 @@ register("playerInteract", (action, pos, event) => {
         let posStr = `${pos.getX()},${pos.getY()},${pos.getZ()}`;
         lastChestClicked = posStr;
         if (currentRoom != null) {
-            if (currentRoom.fakeAt.includes(posStr)) {
+            if (currentRoom.fakeAt.has(posStr)) {
                 currentRoom.removeFakeSecret();
             }
         }
@@ -106,18 +110,13 @@ register("packetReceived", (packet, event) => {
                 let roomData = getRoomData();
                 let maxSecrets = roomData?.secrets;
                 if (!maxSecrets) return;
+
+                let fakeMaxSecrets = customData?.[roomData?.name] ?? maxSecrets;
     
-                if (customData?.[roomData?.name]) {
-                    maxSecrets = customData[roomData.name];
-                }
-    
-                currentRoom = new DungeonRoom(0, maxSecrets, roomData.name);
+                currentRoom = new DungeonRoom(0, maxSecrets, roomData.name, fakeMaxSecrets);
                 currentRoom.addFakeSecret();
             } else {
-                if (!currentRoom.fakeAt.includes(lastChestClicked)) {
-                    // console.log(currentRoom.fakeAt.includes(lastChestClicked))
-                    // console.log(`${currentRoom.fakeAt.toString()}`)
-                    // console.log(`${lastChestClicked}`)
+                if (!currentRoom.fakeAt.has(lastChestClicked)) {
                     currentRoom.addFakeSecret();
                 }
             }
@@ -138,24 +137,21 @@ class DungeonRoom {
     
         let secretsDone = parseInt(secretMatch[1]);
         let maxSecrets = parseInt(secretMatch[2]);
+        let fakeMaxSecrets = customData?.[roomName] ?? maxSecrets;
 
         if (currentRoom != null && roomName != currentRoom.roomName) {
             currentRoom = null;
         }
-
-        if (customData?.[roomName]) {
-            maxSecrets = customData[roomName];
-        }
     
-        if (secretsDone == 0 && maxSecrets == 1 && currentRoom == null) {
-            currentRoom = new DungeonRoom(0, 1, roomName);
+        if (secretsDone == 0 && (maxSecrets == 1 || fakeMaxSecrets == 1) && currentRoom == null) {
+            currentRoom = new DungeonRoom(0, 1, roomName, fakeMaxSecrets);
             return;
         } else if (secretsDone == 0 && currentRoom == null) {
             return;
         }
         
         if (secretsDone == 1 && currentRoom == null && maxSecrets != 1) {
-            currentRoom = new DungeonRoom(secretsDone, maxSecrets, roomName);
+            currentRoom = new DungeonRoom(secretsDone, maxSecrets, roomName, fakeMaxSecrets);
         }
     
         if (currentRoom != null) {
@@ -163,40 +159,57 @@ class DungeonRoom {
         }
     }
 
-    constructor(currentSecrets, maxSecrets, roomName) {
+    constructor(currentSecrets, maxSecrets, roomName, fakeMaxSecrets) {
+        if (completedRooms.has(roomName)) {
+            completedRooms = null;
+        }
         this.currentSecrets = currentSecrets;
         this.fakeSecrets = 0;
+        this.fakeMaxSecrets = fakeMaxSecrets;
         this.maxSecrets = maxSecrets;
         this.roomName = roomName;
         this.startedAt = Date.now();
-        this.fakeAt = [];
+        this.fakeAt = new Set();
+        this.fakeCompleted = false;
     }
 
     print() {
-        console.log(`${this.roomName} ${this.currentSecrets} ${this.fakeSecrets} ${this.maxSecrets} ${this.fakeAt.length}`);
+        console.log(`${this.roomName} ${this.currentSecrets} ${this.fakeSecrets} ${this.maxSecrets} ${this.fakeAt.size}`);
     }
 
     addFakeSecret() {
         if (lastChestClicked == null) return;
         
-        if (this.fakeAt.includes(lastChestClicked)) {
+        if (this.fakeAt.has(lastChestClicked)) {
             return;
         }
 
         this.fakeSecrets++;
         this.checkCompleted(this.currentSecrets);
-        this.fakeAt.push(lastChestClicked);
+        this.fakeAt.add(lastChestClicked);
     }
 
     removeFakeSecret() {
         this.fakeSecrets--;
-        this.fakeAt.splice(this.fakeAt.indexOf(lastChestClicked), 1);
+        this.fakeAt.delete(lastChestClicked);
         this.checkCompleted(this.currentSecrets);
     }
 
     checkCompleted(secretsDone) {
         this.currentSecrets = secretsDone;
-        if (this.currentSecrets + this.fakeSecrets >= this.maxSecrets) {
+
+        if (this.fakeMaxSecrets != this.maxSecrets && !this.fakeCompleted && this.currentSecrets + this.fakeSecrets >= this.fakeMaxSecrets) {
+            this.fakeCompleted = true;
+            ChatLib.chat(`&7> &b${this.roomName} &fdone in &b${this.formatTime()} &fseconds &7(${this.currentSecrets + (this.fakeSecrets / 2)}/${this.fakeMaxSecrets})`);
+
+            let beatsPB = (pbData?.[this.roomName] || 100000000000) > this.doneTime;
+            if (beatsPB) {
+                if (!pbData?.["solo"]) pbData["solo"] = {};
+                if (!pbData?.["realrun"]) pbData["realrun"] = {};
+                pbData[soloRun ? "solo" : "realrun"][this.roomName] = this.doneTime;
+                pbData.save();
+            }
+        } else if (this.currentSecrets + this.fakeSecrets >= this.maxSecrets) {
             ChatLib.chat(`&7> &b${this.roomName} &fdone in &b${this.formatTime()} &fseconds &7(${this.currentSecrets + (this.fakeSecrets / 2)}/${this.maxSecrets})`);
             
             let beatsPB = (pbData?.[this.roomName] || 100000000000) > this.doneTime;
@@ -207,6 +220,7 @@ class DungeonRoom {
                 pbData.save();
             }
             
+            completedRooms.add(this.roomName);
             currentRoom = null;
         }
     }
