@@ -1,0 +1,7 @@
+{
+  "name": "bigtimer",
+  "creator": "eatplastic",
+  "version": "0.0.1",
+  "entry": "index.js",
+  "requires": ["BloomCore", "roomsAPI", "PogData"]
+}
