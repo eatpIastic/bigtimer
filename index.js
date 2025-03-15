@@ -12,6 +12,7 @@ const tabCompletions = [];
 
 let currentRoom = null;
 
+
 register("command", (...args) => {
     if (!args?.[0] || !args?.[1]) {
         ChatLib.chat(`Incorrect Usage. Example: /bigtimer Pirate 5`);
@@ -44,6 +45,7 @@ register("command", (...args) => {
     return namesThatStartWith;
 });
 
+
 register("packetReceived", (packet, event) => {
     if (packet.func_179841_c() != 2 || !Dungeon.inDungeon) {
         return;
@@ -51,10 +53,7 @@ register("packetReceived", (packet, event) => {
 
     let unformattedText = packet.func_148915_c().text.removeFormatting();
     let secretMatch = unformattedText.match(/.+(\d+)\/(\d+) Secrets.*/);
-    if (!secretMatch) {
-        console.log("no secret match");
-        return;
-    }
+    if (!secretMatch) return;
 
     let secretsDone = parseInt(secretMatch[1]);
     let maxSecrets = parseInt(secretMatch[2]);
@@ -75,7 +74,6 @@ register("packetReceived", (packet, event) => {
 
     if (secretsDone == 1 && currentRoom == null && maxSecrets != 1) {
         currentRoom = new DungeonRoom(secretsDone, maxSecrets, roomName);
-        console.log("started room");
     }
 
     if (currentRoom != null) {
@@ -92,7 +90,6 @@ class DungeonRoom {
         this.maxSecrets = maxSecrets;
         this.roomName = roomName;
         this.startedAt = Date.now();
-        console.log(`${this.currentSecrets}/${this.maxSecrets} ${this.roomName}`)
     }
 
 
