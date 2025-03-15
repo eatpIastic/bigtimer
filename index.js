@@ -95,7 +95,7 @@ class DungeonRoom {
 
     checkCompleted(secretsDone) {
         if (secretsDone >= this.maxSecrets) {
-            ChatLib.chat(`&7> &b${this.roomName} &fdone in &b${this.formatTime()} &fseconds`);
+            ChatLib.chat(`&7> &b${this.roomName} &fdone in &b${this.formatTime()} &fseconds &7(${this.secretsDone}/${this.maxSecrets})`);
         }
 
         return secretsDone >= this.maxSecrets;
