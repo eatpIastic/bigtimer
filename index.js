@@ -95,7 +95,7 @@ register("packetReceived", (packet, event) => {
 
     if (packet.func_179841_c() == 2) {
         DungeonRoom.secretUpdate(packet);
-        if (currentRoom != null) currentRoom.print();
+        // if (currentRoom != null) currentRoom.print();
         return;
     } else if (packet.func_179841_c() == 0) {
         // // That chest is locked!
@@ -114,7 +114,12 @@ register("packetReceived", (packet, event) => {
                 currentRoom = new DungeonRoom(0, maxSecrets, roomData.name);
                 currentRoom.addFakeSecret();
             } else {
-                currentRoom.addFakeSecret();
+                if (!currentRoom.fakeAt.includes(lastChestClicked)) {
+                    // console.log(currentRoom.fakeAt.includes(lastChestClicked))
+                    // console.log(`${currentRoom.fakeAt.toString()}`)
+                    // console.log(`${lastChestClicked}`)
+                    currentRoom.addFakeSecret();
+                }
             }
         } // "You hear the sound of something opening..."
     }
@@ -176,13 +181,13 @@ class DungeonRoom {
         }
 
         this.fakeSecrets++;
-        this.checkCompleted(this.currentSecrets + this.fakeSecrets);
+        this.checkCompleted(this.currentSecrets);
         this.fakeAt.push(lastChestClicked);
     }
 
     removeFakeSecret() {
         this.fakeSecrets--;
-        this.fakeAt = this.fakeAt.splice(this.fakeAt.indexOf(lastChestClicked), 1);
+        this.fakeAt.splice(this.fakeAt.indexOf(lastChestClicked), 1);
         this.checkCompleted(this.currentSecrets);
     }
 
